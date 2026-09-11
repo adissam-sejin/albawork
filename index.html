@@ -7,6 +7,27 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>알바 주간정산</title>
+<meta name="description" content="출근, 퇴근, 한 일을 기록하고 주 단위로 정산하는 알바 관리 앱">
+
+<!-- SNS 공유 미리보기 (주소가 바뀌면 아래 두 줄의 주소만 바꿔주세요) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="알바 주간정산">
+<meta property="og:title" content="알바 주간정산">
+<meta property="og:description" content="출근, 퇴근, 한 일을 기록하고 주 단위로 정산해요">
+<meta property="og:image" content="https://ovalba.vercel.app/og.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ovalba.vercel.app/og.png?v=1">
+
+<!-- 홈 화면 바로가기 아이콘 -->
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="알바정산">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 @font-face { font-family: 'Freesentation'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2404@1.0/Freesentation-4Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
@@ -207,6 +228,10 @@ textarea.input { min-height: 110px; resize: vertical; line-height: 1.5; }
   background: var(--ink); color: var(--paper); padding: 14px 22px; border-radius: 999px; font-size: 1.05rem; font-weight: 600;
   z-index: 60; width: max-content; max-width: 90vw; text-align: center; word-break: keep-all;
 }
+.install-steps { margin: 0 0 16px; padding: 0; list-style: none; counter-reset: st; }
+.install-steps li { counter-increment: st; position: relative; padding: 10px 0 10px 44px; font-size: 1.05rem; border-bottom: 1px solid var(--line); }
+.install-steps li::before { content: counter(st); position: absolute; left: 0; top: 10px; width: 30px; height: 30px; border-radius: 50%; background: var(--brown); color: #fff; font-weight: 800; font-size: .95rem; display: flex; align-items: center; justify-content: center; }
+.install-steps b { font-weight: 800; }
 .loading { text-align: center; padding: 60px 0; font-size: 1.1rem; color: var(--ink); }
 </style>
 </head>
@@ -231,6 +256,43 @@ const S = {
   weekStart: '', data: null, tab: 'week', detailId: '', editWorker: null, hist: null, loginError: '',
 };
 const $app = document.getElementById('app');
+
+/* ── 홈 화면에 추가 ── */
+let installEvent = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; });
+window.addEventListener('appinstalled', () => { installEvent = null; toast('홈 화면에 추가했어요'); render(); });
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const inAppBrowser = () => /KAKAOTALK|Instagram|FBAN|FBAV|NAVER|Line\//i.test(navigator.userAgent);
+const installLink = () => (isStandalone() ? '' : '<div style="text-align:center;margin-top:6px"><button class="text-btn" data-act="install">휴대폰 홈 화면에 추가하기</button></div>');
+
+async function startInstall() {
+  if (installEvent) {
+    installEvent.prompt();
+    const choice = await installEvent.userChoice.catch(() => null);
+    installEvent = null;
+    if (choice && choice.outcome === 'accepted') return;
+  }
+  const inApp = inAppBrowser()
+    ? `<div class="warn">지금은 ${/KAKAOTALK/i.test(navigator.userAgent) ? '카카오톡' : '앱'} 안에서 열려 있어요. 먼저 화면의 메뉴 버튼에서 ${isIOS() ? '<b>Safari로 열기</b>' : '<b>다른 브라우저로 열기</b>'}를 눌러주세요.</div>`
+    : '';
+  const steps = isIOS()
+    ? `<ol class="install-steps">
+        <li><b>Safari</b>로 이 주소를 열어요</li>
+        <li>화면 아래 <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요</li>
+        <li>목록을 내려 <b>홈 화면에 추가</b>를 누르고, 오른쪽 위 <b>추가</b></li>
+      </ol>
+      <p class="note">아이폰은 홈 화면 아이콘으로 처음 열 때 로그인을 한 번 더 해요.</p>`
+    : `<ol class="install-steps">
+        <li><b>크롬</b>으로 이 주소를 열어요</li>
+        <li>오른쪽 위 <b>⋮</b>(점 세 개)를 눌러요</li>
+        <li><b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르고 <b>추가</b></li>
+      </ol>`;
+  openSheet(`<h3>홈 화면에 추가하기</h3>
+    <p style="font-size:1rem">앱처럼 아이콘을 눌러 바로 열 수 있어요.</p>
+    ${inApp}${steps}
+    <button class="btn line" data-act="close">닫기</button>`);
+}
 const $layer = document.getElementById('layer');
 
 /* ── 도구 ── */
@@ -366,6 +428,7 @@ function renderLogin() {
       <button class="btn" id="lbtn">로그인</button>
     </div>
     <p class="note" style="text-align:center">아이디와 비밀번호는 사장님께 받아주세요.</p>
+    ${installLink()}
   </div>`;
   const go = async () => {
     const id = document.getElementById('lid').value.trim();
@@ -441,6 +504,7 @@ function renderWorker() {
       ${!d.locked && workerDateRange(d.week.start).min <= workerDateRange(d.week.start).max ? '<button class="btn line" data-act="my-new" style="margin-top:12px">근무 기록 추가</button>' : ''}
       ${settle}
     </section>
+    ${installLink()}
   </div>`;
 }
 
@@ -508,7 +572,7 @@ function renderAdmin() {
           <div class="li-bottom"><span class="li-sub">아이디 ${esc(w.id)}</span><span class="li-pay num">시급 ${won(w.wage)}</span></div>
         </button>`).join('') : '<div class="card"><p style="margin:0">아직 알바생이 없어요. 위 버튼으로 추가해주세요.</p></div>'}`;
   } else body = '<div class="loading">불러오는 중이에요</div>';
-  $app.innerHTML = `<div class="wrap">${adminTop()}${body}</div>`;
+  $app.innerHTML = `<div class="wrap">${adminTop()}${body}${installLink()}</div>`;
 }
 
 function renderDetail() {
@@ -669,6 +733,7 @@ document.addEventListener('click', async (e) => {
 
   if (act === 'sheet-bg') { if (e.target === el) closeSheet(); return; }
   if (act === 'close') return closeSheet();
+  if (act === 'install') return startInstall();
   if (act === 'retry') { $app.innerHTML = '<div class="loading">불러오는 중이에요</div>'; return refresh(); }
   if (act === 'logout') {
     if (await confirmSheet('로그아웃할까요?', '다시 들어올 때 아이디와 비밀번호가 필요해요.', '로그아웃')) logout();

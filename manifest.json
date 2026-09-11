@@ -1,0 +1,16 @@
+{
+  "name": "알바 주간정산",
+  "short_name": "알바정산",
+  "description": "출근, 퇴근, 한 일을 기록하고 주 단위로 정산해요",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#bdbfb8",
+  "theme_color": "#bdbfb8",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
