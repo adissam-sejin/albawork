@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#bdbfb8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>알바 주간정산</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+@font-face { font-family: 'Freesentation'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2404@1.0/Freesentation-4Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Freesentation'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2404@1.0/Freesentation-6SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Freesentation'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2404@1.0/Freesentation-8ExtraBold.woff2') format('woff2'); font-weight: 800; font-display: swap; }
+
+:root {
+  --bg: #bdbfb8;
+  --paper: #eeefea;
+  --paper-2: #e3e5de;
+  --ink: #3c3e40;
+  --muted: #676a6c;
+  --line: #cfd1ca;
+  --brown: #705036;
+  --brown-dark: #5a3f2a;
+  --olive: #92a823;
+  --teal: #65aebf;
+  --danger: #a33a2a;
+  --r-card: 18px;
+  --r-btn: 14px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { font-size: 18px; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: 'Freesentation', 'Pretendard Variable', Pretendard, 'Noto Sans KR', system-ui, sans-serif;
+  line-height: 1.5; -webkit-text-size-adjust: 100%;
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+.wrap { max-width: 520px; margin: 0 auto; padding: 14px 14px calc(40px + env(safe-area-inset-bottom)); }
+
+/* 상단 */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 4px 14px; }
+.top .who { font-size: 1.22rem; font-weight: 800; }
+.top .who small { display: block; font-size: .85rem; font-weight: 400; color: var(--muted); }
+.icon-btn {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 12px;
+  background: transparent; border: 1.5px solid var(--ink); border-radius: 999px; font-size: .9rem; font-weight: 600; text-decoration: none; color: var(--ink);
+}
+.icon-btn svg { width: 20px; height: 20px; }
+.top-actions { display: flex; gap: 6px; }
+
+/* 카드 */
+.card { background: var(--paper); border-radius: var(--r-card); padding: 20px 18px; margin-bottom: 14px; }
+.card h2 { margin: 0 0 12px; font-size: 1.2rem; font-weight: 800; }
+
+/* 출근카드 (펀치카드) */
+.punch { position: relative; padding-top: 30px; }
+.punch::before {
+  content: ''; position: absolute; top: 12px; left: 18px; right: 18px; height: 8px;
+  background-image: radial-gradient(circle, var(--bg) 3.5px, transparent 4px);
+  background-size: 22px 8px; background-repeat: repeat-x; background-position: left center;
+}
+.punch .date { font-size: 1.1rem; font-weight: 600; }
+.punch .clock { font-size: 4.2rem; font-weight: 800; line-height: 1; letter-spacing: -.02em; margin: 6px 0 16px; }
+.state { font-size: 1.05rem; margin-bottom: 14px; }
+.state strong { font-weight: 800; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px; border-radius: 999px; font-size: .88rem; font-weight: 800; white-space: nowrap; }
+.pill.working { background: var(--teal); color: #1f3a41; }
+.pill.paid { background: var(--olive); color: #28300a; }
+.pill.wait { background: transparent; border: 1.5px solid var(--brown); color: var(--brown); }
+.pill.idle { background: var(--paper-2); color: var(--muted); }
+.pill.off { background: var(--ink); color: var(--paper); }
+.pill.working::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #1f3a41; animation: blink 1.6s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .pill.working::before { animation: none; } }
+
+.btn {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 64px; padding: 0 18px;
+  border: 0; border-radius: var(--r-btn); font-size: 1.3rem; font-weight: 800; background: var(--brown); color: #fff;
+}
+.btn:active { background: var(--brown-dark); }
+.btn.dark { background: var(--ink); }
+.btn.line { background: transparent; color: var(--ink); border: 2px solid var(--ink); min-height: 56px; font-size: 1.1rem; }
+.btn.small { min-height: 52px; font-size: 1.05rem; }
+.btn.danger { background: transparent; color: var(--danger); border: 2px solid var(--danger); min-height: 52px; font-size: 1.05rem; }
+.btn[disabled] { opacity: .55; }
+.btn + .btn { margin-top: 10px; }
+.text-btn { background: none; border: 0; padding: 10px 4px; font-size: 1rem; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; color: var(--ink); }
+
+label.field { display: block; margin-bottom: 14px; }
+label.field > span { display: block; font-size: .95rem; font-weight: 600; margin-bottom: 6px; }
+label.field > em { display: block; font-style: normal; font-size: .85rem; color: var(--muted); margin-top: 4px; }
+.input, textarea.input, select.input {
+  display: block; width: 100%; min-height: 56px; padding: 12px 14px; font-size: 1.1rem;
+  background: #fff; border: 1.5px solid var(--line); border-radius: 12px;
+}
+textarea.input { min-height: 110px; resize: vertical; line-height: 1.5; }
+.input:focus { border-color: var(--ink); outline: none; }
+.input[readonly] { background: var(--paper-2); color: var(--muted); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* 주 이동 */
+.weeknav { display: grid; grid-template-columns: 52px 1fr 52px; align-items: center; gap: 6px; margin-bottom: 14px; }
+.weeknav button { height: 52px; border-radius: 12px; border: 1.5px solid var(--ink); background: transparent; display: flex; align-items: center; justify-content: center; }
+.weeknav button svg { width: 24px; height: 24px; }
+.weeknav button[disabled] { opacity: .3; }
+.weeknav .label { text-align: center; }
+.weeknav .label strong { display: block; font-size: 1.15rem; font-weight: 800; }
+.weeknav .label small { font-size: .85rem; color: var(--muted); }
+
+/* 주간 출근카드 표 */
+.tc { border-top: 2px solid var(--ink); }
+.tc-day { display: grid; grid-template-columns: 58px 1fr; border-bottom: 1px solid var(--line); min-height: 58px; }
+.tc-day .d { border-right: 1px solid var(--line); padding: 10px 0; text-align: center; line-height: 1.2; }
+.tc-day .d b { display: block; font-size: 1.1rem; font-weight: 800; }
+.tc-day .d small { font-size: .82rem; color: var(--muted); }
+.tc-day.sun .d b { color: var(--brown); }
+.tc-day.today .d { background: var(--paper-2); }
+.tc-day .body { padding: 8px 0 8px 12px; min-width: 0; }
+.tc-day .empty { color: #9a9c98; font-size: .95rem; padding-top: 8px; }
+.rec + .rec { border-top: 1px dashed var(--line); margin-top: 8px; padding-top: 8px; }
+.rec-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.rec-time { font-size: 1.12rem; font-weight: 800; }
+.rec-pay { font-size: 1rem; font-weight: 600; }
+.rec-sub { font-size: .9rem; color: var(--muted); }
+.rec-memo { font-size: 1rem; margin-top: 4px; white-space: pre-wrap; word-break: break-all; }
+.rec-memo.none { color: #9a9c98; }
+.rec-tag { display: inline-block; margin-top: 4px; padding: 1px 10px; border-radius: 999px; border: 1.5px solid var(--brown); color: var(--brown); font-size: .82rem; font-weight: 700; }
+.day-add { background: none; border: 1.5px dashed var(--muted); color: var(--ink); border-radius: 10px; padding: 6px 12px; font-size: .92rem; font-weight: 600; min-height: 42px; margin-top: 2px; }
+.lock-note { background: #e2e8c8; border-radius: 12px; padding: 12px 14px; font-size: .98rem; margin-bottom: 12px; }
+.rec-edit { margin-top: 4px; background: none; border: 1.5px solid var(--line); border-radius: 10px; padding: 6px 12px; font-size: .9rem; font-weight: 600; min-height: 40px; }
+
+.total { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0 4px; gap: 10px; flex-wrap: wrap; }
+.total .t-label { font-size: 1rem; color: var(--muted); }
+.total .t-min { font-size: 1.05rem; font-weight: 600; }
+.total .t-pay { font-size: 1.6rem; font-weight: 800; }
+.note { font-size: .92rem; color: var(--muted); }
+.box { background: var(--paper-2); border-radius: 12px; padding: 14px; margin-top: 12px; }
+.box.paid { background: #e2e8c8; }
+.box .big { font-size: 1.4rem; font-weight: 800; }
+.warn { background: #f3e3d6; color: #5a3f2a; border-radius: 12px; padding: 12px 14px; font-size: .98rem; margin-bottom: 12px; }
+.error { background: #f2d9d4; color: #6e2518; border-radius: 12px; padding: 12px 14px; font-size: 1rem; margin-bottom: 14px; word-break: keep-all; }
+
+/* 관리자 탭 */
+.tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--paper-2); border-radius: 14px; padding: 4px; margin-bottom: 14px; }
+.tabs button { min-height: 52px; border: 0; border-radius: 11px; background: transparent; font-size: 1.08rem; font-weight: 600; color: var(--muted); }
+.tabs button.on { background: var(--ink); color: var(--paper); font-weight: 800; }
+
+.sum-line { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.sum-line div { background: var(--paper); border-radius: 14px; padding: 12px 14px; }
+.sum-line small { display: block; font-size: .85rem; color: var(--muted); }
+.sum-line b { font-size: 1.25rem; font-weight: 800; }
+
+.list-item {
+  display: block; width: 100%; text-align: left; background: var(--paper); border: 0; border-radius: 16px;
+  padding: 16px 16px; margin-bottom: 10px;
+}
+.list-item .li-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.list-item .li-name { font-size: 1.2rem; font-weight: 800; }
+.list-item .li-bottom { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.list-item .li-sub { font-size: .95rem; color: var(--muted); }
+.list-item .li-pay { font-size: 1.15rem; font-weight: 800; }
+.list-item .li-paid { width: 100%; font-size: .95rem; color: #4d5a12; font-weight: 600; }
+
+.back { display: inline-flex; align-items: center; gap: 4px; min-height: 48px; background: none; border: 0; font-size: 1rem; font-weight: 600; padding: 0 4px; }
+.back svg { width: 22px; height: 22px; }
+.head-name { font-size: 1.6rem; font-weight: 800; margin: 0; }
+.head-sub { color: var(--muted); font-size: .95rem; margin: 2px 0 14px; }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: -4px 0 14px; }
+.chip { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--ink); background: transparent; font-size: .95rem; font-weight: 600; }
+
+.hist { border-top: 2px solid var(--ink); }
+.hist-row { display: flex; justify-content: space-between; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.hist-row .h-week { font-weight: 600; }
+.hist-row .h-memo { font-size: .88rem; color: var(--muted); }
+.hist-row .h-paid { font-weight: 800; text-align: right; white-space: nowrap; }
+.hist-row .h-paid small { display: block; font-weight: 400; font-size: .85rem; color: var(--muted); }
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg button { min-height: 52px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; font-size: 1.05rem; font-weight: 600; }
+.seg button.on { border: 2px solid var(--ink); background: var(--ink); color: var(--paper); }
+
+/* 로그인 */
+.login { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+.login h1 { font-size: 2.1rem; font-weight: 800; margin: 0 0 4px; letter-spacing: -.01em; }
+.login .lead { color: var(--ink); margin: 0 0 20px; font-size: 1.05rem; }
+
+/* 하단 시트 */
+.sheet-bg { position: fixed; inset: 0; background: rgba(40, 42, 44, .45); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
+.sheet {
+  width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; background: var(--paper);
+  border-radius: 22px 22px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
+  animation: up .22s ease-out;
+}
+.sheet h3 { margin: 0 0 14px; font-size: 1.3rem; font-weight: 800; }
+.sheet p { margin: 0 0 16px; font-size: 1.08rem; }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); padding: 14px 22px; border-radius: 999px; font-size: 1.05rem; font-weight: 600;
+  z-index: 60; width: max-content; max-width: 90vw; text-align: center; word-break: keep-all;
+}
+.loading { text-align: center; padding: 60px 0; font-size: 1.1rem; color: var(--ink); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="layer"></div>
+
+<script>
+const ICON = {
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>',
+  sheet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg>',
+};
+
+const DOWS = ['일', '월', '화', '수', '목', '금', '토'];
+const S = {
+  token: localStorage.getItem('aw_token') || '',
+  role: localStorage.getItem('aw_role') || '',
+  name: localStorage.getItem('aw_name') || '',
+  sheetUrl: localStorage.getItem('aw_sheet') || '',
+  weekStart: '', data: null, tab: 'week', detailId: '', editWorker: null, hist: null, loginError: '',
+};
+const $app = document.getElementById('app');
+const $layer = document.getElementById('layer');
+
+/* ── 도구 ── */
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const won = (n) => `${Number(n || 0).toLocaleString('ko-KR')}원`;
+const dur = (m) => { m = Number(m || 0); const h = Math.floor(m / 60), mm = m % 60; return h && mm ? `${h}시간 ${mm}분` : h ? `${h}시간` : `${mm}분`; };
+const tm = (dt) => String(dt || '').slice(11, 16);
+const md = (d) => { const [, m, dd] = String(d).split('-'); return `${+m}.${+dd}`; };
+const dow = (d) => { const [y, m, dd] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd)).getUTCDay(); };
+const addDays = (d, n) => { const [y, m, dd] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); };
+const weekStartOf = (d) => addDays(d, -((dow(d) + 6) % 7));
+const toMs = (dt) => { const m = String(dt).match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4] - 9, +m[5]) : NaN; };
+function kstNow() {
+  const k = new Date(Date.now() + 9 * 3600000);
+  return k.toISOString().slice(0, 10) + ' ' + k.toISOString().slice(11, 16);
+}
+const today = () => kstNow().slice(0, 10);
+const longDate = (d) => { const [, m, dd] = d.split('-').map(Number); return `${m}월 ${dd}일 ${DOWS[dow(d)]}요일`; };
+const weekLabel = (ws) => `${md(ws)}(월) ~ ${md(addDays(ws, 6))}(일)`;
+const isThisWeek = (ws) => ws === weekStartOf(today());
+const dueLabel = (ws) => { const e = addDays(ws, 6); const [, m, d] = e.split('-').map(Number); return `${m}월 ${d}일(일) 밤 10시`; };
+const moneyInput = (v) => String(v).replace(/[^0-9]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+async function api(action, payload = {}) {
+  let res;
+  try {
+    res = await fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, token: S.token, ...payload }) });
+  } catch (e) {
+    throw new Error('인터넷 연결을 확인하고 다시 눌러주세요.');
+  }
+  const data = await res.json().catch(() => ({ error: '서버 응답을 읽지 못했어요. 잠시 뒤 다시 시도해주세요.' }));
+  if (res.status === 401 && action !== 'login') { logout(data.error); throw new Error(data.error); }
+  if (!res.ok || data.error) throw new Error(data.error || '요청을 처리하지 못했어요.');
+  return data;
+}
+
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+function closeSheet() { $layer.innerHTML = ''; }
+function openSheet(html) {
+  $layer.innerHTML = `<div class="sheet-bg" data-act="sheet-bg"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+  const first = $layer.querySelector('input, textarea, button');
+  if (first && first.tagName !== 'BUTTON') setTimeout(() => first.focus(), 50);
+}
+function confirmSheet(title, text, okLabel, danger) {
+  return new Promise((resolve) => {
+    openSheet(`<h3>${esc(title)}</h3><p>${text}</p>
+      <button class="btn ${danger ? 'danger' : ''}" data-cf="ok">${esc(okLabel)}</button>
+      <button class="btn line" data-cf="no">취소</button>`);
+    $layer.querySelectorAll('[data-cf]').forEach((b) => b.onclick = () => { closeSheet(); resolve(b.dataset.cf === 'ok'); });
+  });
+}
+async function withBusy(btn, label, fn) {
+  const old = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = label; }
+  try { return await fn(); }
+  catch (e) { toast(e.message); if (btn && document.body.contains(btn)) { btn.disabled = false; btn.textContent = old; } throw e; }
+}
+
+function logout(msg) {
+  ['aw_token', 'aw_role', 'aw_name', 'aw_sheet'].forEach((k) => localStorage.removeItem(k));
+  Object.assign(S, { token: '', role: '', name: '', data: null, weekStart: '', detailId: '', editWorker: null, loginError: msg || '' });
+  closeSheet(); render();
+}
+
+/* ── 공통 조각 ── */
+function weekNav(ws, act) {
+  return `<div class="weeknav">
+    <button data-act="${act}" data-dir="-1" aria-label="이전 주">${ICON.left}</button>
+    <div class="label"><strong class="num">${weekLabel(ws)}</strong><small>${isThisWeek(ws) ? '이번 주' : '지난 기록'}</small></div>
+    <button data-act="${act}" data-dir="1" aria-label="다음 주" ${isThisWeek(ws) ? 'disabled' : ''}>${ICON.right}</button>
+  </div>`;
+}
+
+// 알바생이 기록을 넣을 수 있는 날짜 범위 (보고 있는 주 안, 지난주 월요일부터 오늘까지)
+function workerDateRange(ws) {
+  const oldest = addDays(weekStartOf(today()), -7);
+  let min = ws, max = addDays(ws, 6);
+  if (oldest > min) min = oldest;
+  if (today() < max) max = today();
+  return { min, max };
+}
+
+function timeCard(ws, records, { admin = false, worker = false, locked = false } = {}) {
+  const t = today();
+  const range = worker ? workerDateRange(ws) : null;
+  let html = '<div class="tc">';
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(ws, i);
+    const recs = records.filter((r) => r.date === d);
+    html += `<div class="tc-day ${i === 6 ? 'sun' : ''} ${d === t ? 'today' : ''}">
+      <div class="d"><b>${DOWS[dow(d)]}</b><small class="num">${md(d)}</small></div>
+      <div class="body">`;
+    const canAdd = admin || (worker && !locked && d >= range.min && d <= range.max);
+    if (!recs.length) {
+      html += canAdd
+        ? `<button class="day-add" data-act="${admin ? 'rec-new' : 'my-new'}" data-date="${d}">기록 추가</button>`
+        : '<div class="empty">-</div>';
+    }
+    recs.forEach((r) => {
+      const working = !r.out;
+      const overnight = r.out && r.out.slice(0, 10) !== r.date;
+      html += `<div class="rec">
+        <div class="rec-line">
+          <span class="rec-time num">${tm(r.in)} ~ ${working ? '<span class="pill working">근무 중</span>' : tm(r.out) + (overnight ? ' <small>(다음날)</small>' : '')}</span>
+          ${working ? '' : `<span class="rec-pay num">${won(r.pay)}</span>`}
+        </div>
+        ${working ? '' : `<div class="rec-sub num">${dur(r.min)} 근무, 시급 ${won(r.wage)}</div>`}
+        <div class="rec-memo ${r.content ? '' : 'none'}">${r.content ? esc(r.content) : '업무 내용 없음'}</div>
+        ${admin && r.method && r.method !== '출퇴근 버튼' ? `<span class="rec-tag">${esc(r.method)}</span><br>` : ''}
+        ${admin ? `<button class="rec-edit" data-act="rec-edit" data-rid="${esc(r.rid)}">수정</button>` : ''}
+        ${worker && !locked ? `<button class="rec-edit" data-act="my-edit" data-rid="${esc(r.rid)}">수정</button>` : ''}
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+  return html + '</div>';
+}
+
+/* ── 로그인 ── */
+function renderLogin() {
+  $app.innerHTML = `<div class="wrap login">
+    <h1>알바 주간정산</h1>
+    <p class="lead">출근, 퇴근, 한 일을 기록해요.</p>
+    ${S.loginError ? `<div class="error">${esc(S.loginError)}</div>` : ''}
+    <div class="card">
+      <label class="field"><span>아이디</span><input class="input" id="lid" autocomplete="username" autocapitalize="off" spellcheck="false"></label>
+      <label class="field"><span>비밀번호</span><input class="input" id="lpw" type="password" autocomplete="current-password"></label>
+      <button class="btn" id="lbtn">로그인</button>
+    </div>
+    <p class="note" style="text-align:center">아이디와 비밀번호는 사장님께 받아주세요.</p>
+  </div>`;
+  const go = async () => {
+    const id = document.getElementById('lid').value.trim();
+    const password = document.getElementById('lpw').value;
+    const btn = document.getElementById('lbtn');
+    btn.disabled = true; btn.textContent = '확인 중…';
+    try {
+      const r = await api('login', { id, password });
+      Object.assign(S, { token: r.token, role: r.role, name: r.name, sheetUrl: r.sheetUrl || '', loginError: '', weekStart: '', tab: 'week' });
+      localStorage.setItem('aw_token', r.token); localStorage.setItem('aw_role', r.role);
+      localStorage.setItem('aw_name', r.name); localStorage.setItem('aw_sheet', r.sheetUrl || '');
+      render();
+    } catch (e) {
+      S.loginError = e.message; renderLogin();
+      document.getElementById('lid').value = id;
+    }
+  };
+  document.getElementById('lbtn').onclick = go;
+  document.getElementById('lpw').onkeydown = (e) => { if (e.key === 'Enter') go(); };
+}
+
+/* ── 알바생 화면 ── */
+async function loadWorker() {
+  S.data = await api('home', { weekStart: S.weekStart });
+  S.weekStart = S.data.week.start;
+}
+
+function renderWorker() {
+  const d = S.data;
+  if (!d) { $app.innerHTML = '<div class="loading">불러오는 중이에요</div>'; return; }
+  const open = d.open;
+  const now = kstNow();
+  let state;
+  if (open) {
+    const mins = Math.max(0, Math.floor((Date.now() - toMs(open.in)) / 60000));
+    const oldDay = open.date !== today();
+    state = `<div class="state"><span class="pill working">근무 중</span></div>
+      <div class="state num"><strong>${oldDay ? md(open.date) + ' ' : ''}${tm(open.in)}</strong> 출근, <strong id="elapsed">${dur(mins)}</strong>째</div>
+      ${oldDay ? '<div class="warn">출근이 어제 날짜로 되어 있어요. 퇴근 시간이 맞지 않으면 사장님께 말씀해주세요.</div>' : ''}
+      <label class="field"><span>오늘 한 일</span>
+        <textarea class="input" id="memo" placeholder="예) 매장 청소, 택배 포장 20건">${esc(open.content)}</textarea></label>
+      <button class="btn dark" data-act="clock-out">퇴근하기</button>
+      <div style="text-align:center"><button class="text-btn" data-act="memo-save">메모만 저장</button></div>`;
+  } else {
+    state = `<div class="state">출근 전이에요.</div>
+      <button class="btn" data-act="clock-in">출근하기</button>`;
+  }
+  const settle = d.settle
+    ? `<div class="box paid"><span class="pill paid">입금 완료</span>
+        <div class="big num" style="margin-top:6px">${won(d.settle.paid)}</div>
+        <div class="note num">입금일 ${md(d.settle.paidDate)}</div></div>`
+    : `<div class="box"><div class="note">정산일</div><div style="font-weight:800;font-size:1.1rem">${dueLabel(d.week.start)}</div></div>`;
+
+  $app.innerHTML = `<div class="wrap">
+    <div class="top">
+      <div class="who">${esc(d.worker.name)}님<small>시급 ${won(d.worker.wage)}</small></div>
+      <button class="icon-btn" data-act="logout">${ICON.out}로그아웃</button>
+    </div>
+    <section class="card punch">
+      <div class="date">${longDate(today())}</div>
+      <div class="clock num" id="clock">${now.slice(11, 16)}</div>
+      ${state}
+    </section>
+    <section class="card">
+      <h2>주간 출근카드</h2>
+      ${weekNav(d.week.start, 'w-week')}
+      ${d.locked ? '<div class="lock-note">입금이 끝난 주라서 기록을 고칠 수 없어요. 고칠 내용은 사장님께 말씀해주세요.</div>' : '<p class="note" style="margin:-4px 0 12px">출퇴근을 못 찍은 날은 기록 추가로 넣어주세요. 입금 전까지 고칠 수 있어요.</p>'}
+      ${timeCard(d.week.start, d.records, { worker: true, locked: d.locked })}
+      <div class="total">
+        <span class="t-label">합계 <span class="t-min num">${dur(d.summary.min)}</span></span>
+        <span class="t-pay num">${won(d.summary.calc)}</span>
+      </div>
+      ${!d.locked && workerDateRange(d.week.start).min <= workerDateRange(d.week.start).max ? '<button class="btn line" data-act="my-new" style="margin-top:12px">근무 기록 추가</button>' : ''}
+      ${settle}
+    </section>
+  </div>`;
+}
+
+/* ── 관리자 화면 ── */
+async function loadAdmin() {
+  if (S.tab === 'week') {
+    S.data = await api('adminWeek', { weekStart: S.weekStart });
+    S.weekStart = S.data.week.start;
+  } else {
+    S.data = await api('adminWorkers');
+  }
+}
+
+function statusPill(w, week) {
+  if (w.settle) return '<span class="pill paid">입금 완료</span>';
+  if (w.summary.working) return '<span class="pill working">근무 중</span>';
+  if (!w.records.length) return '<span class="pill idle">근무 없음</span>';
+  if (week.dueReached) return '<span class="pill wait">정산 대기</span>';
+  return '<span class="pill idle">진행 중</span>';
+}
+
+function adminTop() {
+  return `<div class="top">
+    <div class="who">관리자<small>알바 주간정산</small></div>
+    <div class="top-actions">
+      ${S.sheetUrl ? `<a class="icon-btn" href="${esc(S.sheetUrl)}" target="_blank" rel="noopener">${ICON.sheet}시트</a>` : ''}
+      <button class="icon-btn" data-act="logout" aria-label="로그아웃">${ICON.out}</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="${S.tab === 'week' ? 'on' : ''}" data-act="tab" data-tab="week">주간 정산</button>
+    <button class="${S.tab === 'workers' ? 'on' : ''}" data-act="tab" data-tab="workers">알바생 관리</button>
+  </div>`;
+}
+
+function renderAdmin() {
+  if (S.editWorker) return renderWorkerEdit();
+  if (S.detailId && S.data && S.data.week) return renderDetail();
+  const d = S.data;
+  let body;
+  if (!d) body = '<div class="loading">불러오는 중이에요</div>';
+  else if (S.tab === 'week' && d.week) {
+    const calc = d.workers.reduce((a, w) => a + w.summary.calc, 0);
+    const paid = d.workers.reduce((a, w) => a + (w.settle ? w.settle.paid : 0), 0);
+    body = `${weekNav(d.week.start, 'a-week')}
+      <div class="sum-line">
+        <div><small>계산 합계</small><b class="num">${won(calc)}</b></div>
+        <div><small>입금 합계</small><b class="num">${won(paid)}</b></div>
+      </div>
+      ${d.week.dueReached ? '' : `<p class="note" style="margin:-4px 4px 12px">정산일 ${dueLabel(d.week.start)}</p>`}
+      ${d.workers.length ? d.workers.map((w) => `
+        <button class="list-item" data-act="detail" data-id="${esc(w.id)}">
+          <div class="li-top"><span class="li-name">${esc(w.name)}</span>${statusPill(w, d.week)}</div>
+          <div class="li-bottom">
+            <span class="li-sub num">${w.summary.days}일, ${dur(w.summary.min)}</span>
+            <span class="li-pay num">${won(w.summary.calc)}</span>
+            ${w.settle ? `<span class="li-paid num">입금 ${won(w.settle.paid)}${w.settle.diff ? ` (${w.settle.diff > 0 ? '+' : ''}${w.settle.diff.toLocaleString('ko-KR')})` : ''}</span>` : ''}
+          </div>
+        </button>`).join('') : '<div class="card"><p style="margin:0">등록된 알바생이 없어요. 알바생 관리에서 먼저 추가해주세요.</p></div>'}`;
+  } else if (S.tab === 'workers' && d.workers && !d.week) {
+    body = `<button class="btn" data-act="w-new" style="margin-bottom:14px">알바생 추가</button>
+      ${d.workers.length ? d.workers.map((w) => `
+        <button class="list-item" data-act="w-open" data-id="${esc(w.id)}">
+          <div class="li-top"><span class="li-name">${esc(w.name)}</span>${w.status === '중지' ? '<span class="pill off">중지</span>' : ''}</div>
+          <div class="li-bottom"><span class="li-sub">아이디 ${esc(w.id)}</span><span class="li-pay num">시급 ${won(w.wage)}</span></div>
+        </button>`).join('') : '<div class="card"><p style="margin:0">아직 알바생이 없어요. 위 버튼으로 추가해주세요.</p></div>'}`;
+  } else body = '<div class="loading">불러오는 중이에요</div>';
+  $app.innerHTML = `<div class="wrap">${adminTop()}${body}</div>`;
+}
+
+function renderDetail() {
+  const d = S.data;
+  const w = d.workers.find((x) => x.id === S.detailId);
+  if (!w) { S.detailId = ''; return renderAdmin(); }
+  const st = w.settle;
+  const paidVal = st ? st.paid : w.summary.calc;
+  const defDate = st ? st.paidDate : (today() > d.week.end ? d.week.end : today());
+  $app.innerHTML = `<div class="wrap">
+    <button class="back" data-act="back">${ICON.left}주간 정산으로</button>
+    <h1 class="head-name">${esc(w.name)}</h1>
+    <p class="head-sub">아이디 ${esc(w.id)}, 시급 ${won(w.wage)}</p>
+    ${weekNav(d.week.start, 'a-week')}
+    <section class="card">
+      <h2>근무 기록</h2>
+      ${timeCard(d.week.start, w.records, { admin: true })}
+      <div class="total">
+        <span class="t-label">${w.summary.days}일 <span class="t-min num">${dur(w.summary.min)}</span></span>
+        <span class="t-pay num">${won(w.summary.calc)}</span>
+      </div>
+      <button class="btn line" data-act="rec-new" style="margin-top:12px">근무 기록 추가</button>
+    </section>
+    <section class="card">
+      <h2>입금 기록</h2>
+      ${w.summary.working ? '<div class="warn">퇴근 기록이 없는 근무가 있어요. 퇴근 시간을 먼저 넣어주세요.</div>' : ''}
+      ${!d.week.dueReached ? `<p class="note" style="margin-top:-6px">정산일은 ${dueLabel(d.week.start)}이에요.</p>` : ''}
+      <div class="box" style="margin:0 0 16px">
+        <div class="note">계산 금액</div>
+        <div class="big num">${won(w.summary.calc)}</div>
+      </div>
+      <label class="field"><span>실제 입금액</span>
+        <input class="input num" id="paid" inputmode="numeric" value="${moneyInput(paidVal)}"></label>
+      <div class="chips">
+        <button class="chip" data-act="paid-add" data-v="5000">+5천</button>
+        <button class="chip" data-act="paid-add" data-v="10000">+1만</button>
+        <button class="chip" data-act="paid-add" data-v="0">계산 금액으로</button>
+      </div>
+      <label class="field"><span>입금일</span><input class="input" id="paidDate" type="date" value="${esc(defDate)}"></label>
+      <label class="field"><span>메모</span><input class="input" id="smemo" placeholder="예) 주말 수고비 추가" value="${esc(st ? st.memo : '')}"></label>
+      <p class="note num" id="diffNote"></p>
+      <button class="btn" data-act="settle-save">${st ? '입금 기록 수정' : '입금 기록 저장'}</button>
+      ${st ? `<p class="note num" style="margin:12px 0 0">저장 당시 계산 ${won(st.calc)}, ${md(st.updated.slice(0, 10))} ${esc(st.updated.slice(11, 16))} 저장</p>
+        ${st.calc !== w.summary.calc ? '<div class="warn" style="margin-top:10px">입금 기록 저장 뒤에 근무 기록이 바뀌었어요. 확인 후 다시 저장해주세요.</div>' : ''}
+        <button class="btn danger" data-act="settle-del" style="margin-top:10px">입금 기록 삭제</button>` : ''}
+    </section>
+  </div>`;
+  const $paid = document.getElementById('paid');
+  const upd = () => {
+    const v = Number($paid.value.replace(/[^0-9]/g, '') || 0);
+    const diff = v - w.summary.calc;
+    document.getElementById('diffNote').textContent = diff ? `계산 금액보다 ${diff > 0 ? '+' : ''}${diff.toLocaleString('ko-KR')}원` : '';
+  };
+  $paid.oninput = () => { $paid.value = moneyInput($paid.value); upd(); };
+  upd();
+}
+
+function recordSheet(rec, { mode = 'admin', date = '' } = {}) {
+  const isWorker = mode === 'worker';
+  const ws = S.data.week.start;
+  const name = isWorker ? S.data.worker.name : S.data.workers.find((x) => x.id === S.detailId).name;
+  const range = isWorker ? workerDateRange(ws) : { min: '', max: '' };
+  let defDate = rec ? rec.date : date || (today() >= ws && today() <= addDays(ws, 6) ? today() : ws);
+  if (isWorker && !rec && (defDate < range.min || defDate > range.max)) defDate = range.max;
+  const outNote = isWorker
+    ? '아직 일하는 중이면 퇴근을 비워두세요 (오늘, 어제만 가능). 퇴근이 출근보다 이르면 다음날 퇴근으로 계산해요.'
+    : '퇴근을 비워두면 근무 중으로 남아요. 퇴근이 출근보다 이르면 다음날 퇴근으로 계산해요.';
+  openSheet(`<h3>${rec ? '근무 기록 수정' : '근무 기록 추가'}</h3>
+    <p style="font-size:1rem;margin-bottom:12px">${esc(name)}</p>
+    <label class="field"><span>날짜 (출근한 날)</span><input class="input" id="r-date" type="date" value="${esc(defDate)}"
+      ${isWorker && !rec ? `min="${range.min}" max="${range.max}"` : ''}></label>
+    <div class="row2">
+      <label class="field"><span>출근</span><input class="input" id="r-in" type="time" value="${rec ? tm(rec.in) : ''}"></label>
+      <label class="field"><span>퇴근</span><input class="input" id="r-out" type="time" value="${rec && rec.out ? tm(rec.out) : ''}"></label>
+    </div>
+    <p class="note" style="margin:-6px 0 14px">${outNote}</p>
+    <label class="field"><span>${isWorker ? '그날 한 일' : '업무 내용'}</span><textarea class="input" id="r-content" placeholder="예) 매장 청소, 택배 포장 20건">${esc(rec ? rec.content : '')}</textarea></label>
+    <button class="btn" id="r-save">저장</button>
+    ${rec ? '<button class="btn danger" id="r-del">이 기록 삭제</button>' : ''}
+    <button class="btn line" data-act="close">닫기</button>`);
+  document.getElementById('r-save').onclick = (e) => withBusy(e.currentTarget, '저장 중…', async () => {
+    const payload = {
+      rid: rec ? rec.rid : '',
+      date: document.getElementById('r-date').value, inTime: document.getElementById('r-in').value,
+      outTime: document.getElementById('r-out').value, content: document.getElementById('r-content').value,
+    };
+    if (isWorker) await api('mySaveRecord', payload);
+    else await api('saveRecord', { ...payload, workerId: S.detailId });
+    closeSheet(); toast('저장했어요'); await refresh();
+  }).catch(() => {});
+  if (rec) document.getElementById('r-del').onclick = async () => {
+    if (!(await confirmSheet('기록을 삭제할까요?', `${md(rec.date)} ${tm(rec.in)} 출근 기록이 지워져요.`, '삭제', true))) return;
+    try { await api(isWorker ? 'myDeleteRecord' : 'deleteRecord', { rid: rec.rid }); toast('삭제했어요'); await refresh(); } catch (e) { toast(e.message); }
+  };
+}
+
+function renderWorkerEdit() {
+  const w = S.editWorker;
+  const isNew = !w.id;
+  const h = S.hist;
+  $app.innerHTML = `<div class="wrap">
+    <button class="back" data-act="w-back">${ICON.left}알바생 목록으로</button>
+    <h1 class="head-name">${isNew ? '알바생 추가' : esc(w.name)}</h1>
+    <p class="head-sub">${isNew ? '아이디와 비밀번호를 알바생에게 알려주세요.' : '등록일 ' + esc(w.created)}</p>
+    <section class="card">
+      <label class="field"><span>이름</span><input class="input" id="f-name" value="${esc(w.name || '')}"></label>
+      <label class="field"><span>아이디</span><input class="input" id="f-id" autocapitalize="off" spellcheck="false" value="${esc(w.id || '')}" ${isNew ? '' : 'readonly'}>
+        <em>${isNew ? '영문, 숫자 2~20자' : '아이디는 바꿀 수 없어요'}</em></label>
+      <label class="field"><span>${isNew ? '비밀번호' : '새 비밀번호'}</span><input class="input" id="f-pw" autocapitalize="off" spellcheck="false" placeholder="${isNew ? '4자 이상' : '바꿀 때만 입력'}">
+        <em>비밀번호는 암호화해서 저장돼요. 잊어버리면 여기서 새로 정해주세요.</em></label>
+      <label class="field"><span>시급</span><input class="input num" id="f-wage" inputmode="numeric" value="${moneyInput(w.wage || 12000)}">
+        ${isNew ? '' : '<em>바꾼 시급은 다음 출근부터 적용돼요.</em>'}</label>
+      <label class="field"><span>연락처 (선택)</span><input class="input" id="f-phone" inputmode="tel" value="${esc(w.phone || '')}"></label>
+      <div class="field"><span style="display:block;font-size:.95rem;font-weight:600;margin-bottom:6px">상태</span>
+        <div class="seg">
+          <button data-act="f-status" data-v="사용" class="${w.status !== '중지' ? 'on' : ''}">사용</button>
+          <button data-act="f-status" data-v="중지" class="${w.status === '중지' ? 'on' : ''}">중지</button>
+        </div>
+        <em style="display:block;font-style:normal;font-size:.85rem;color:var(--muted);margin-top:6px">중지하면 로그인할 수 없고, 지난 기록은 그대로 남아요.</em>
+      </div>
+      <button class="btn" data-act="w-save" style="margin-top:8px">${isNew ? '알바생 추가' : '저장'}</button>
+    </section>
+    ${isNew ? '' : `<section class="card">
+      <h2>${h ? h.year + '년 ' : ''}입금 내역</h2>
+      ${!h ? '<p class="note">불러오는 중이에요</p>' : h.list.length ? `
+        <div class="hist">${h.list.map((s) => `<div class="hist-row">
+          <div><div class="h-week num">${md(s.start)} ~ ${md(s.end)}</div><div class="h-memo num">${dur(s.min)}${s.memo ? ', ' + esc(s.memo) : ''}</div></div>
+          <div class="h-paid num">${won(s.paid)}<small>입금일 ${md(s.paidDate)}</small></div>
+        </div>`).join('')}</div>
+        <div class="total"><span class="t-label">올해 입금 합계</span><span class="t-pay num">${won(h.total)}</span></div>` : '<p class="note" style="margin:0">아직 입금 기록이 없어요.</p>'}
+    </section>`}
+  </div>`;
+}
+
+/* ── 화면 전환 ── */
+async function refresh() {
+  try {
+    if (S.role === 'worker') { await loadWorker(); renderWorker(); }
+    else if (S.role === 'admin') { await loadAdmin(); renderAdmin(); }
+  } catch (e) {
+    if (!S.token) return;
+    $app.innerHTML = `<div class="wrap"><div class="top"><div class="who">${esc(S.name)}</div><button class="icon-btn" data-act="logout">${ICON.out}로그아웃</button></div>
+      <div class="error">${esc(e.message)}</div><button class="btn" data-act="retry">다시 불러오기</button></div>`;
+  }
+}
+
+function render() {
+  if (!S.token) return renderLogin();
+  if (S.role === 'worker') { renderWorker(); if (!S.data) refresh(); }
+  else { renderAdmin(); if (!S.data) refresh(); }
+}
+
+/* ── 버튼 처리 ── */
+document.addEventListener('click', async (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.dataset.act;
+
+  if (act === 'sheet-bg') { if (e.target === el) closeSheet(); return; }
+  if (act === 'close') return closeSheet();
+  if (act === 'retry') { $app.innerHTML = '<div class="loading">불러오는 중이에요</div>'; return refresh(); }
+  if (act === 'logout') {
+    if (await confirmSheet('로그아웃할까요?', '다시 들어올 때 아이디와 비밀번호가 필요해요.', '로그아웃')) logout();
+    return;
+  }
+
+  /* 알바생 */
+  if (act === 'w-week') {
+    S.weekStart = addDays(S.weekStart, 7 * Number(el.dataset.dir));
+    el.disabled = true;
+    return refresh();
+  }
+  if (act === 'clock-in') {
+    return withBusy(el, '기록 중…', async () => {
+      const r = await api('clockIn');
+      toast(`${tm(r.time)} 출근했어요`);
+      S.weekStart = ''; await refresh();
+    }).catch(() => {});
+  }
+  if (act === 'clock-out') {
+    const memo = document.getElementById('memo');
+    if (!memo.value.trim()) { toast('오늘 한 일을 먼저 적어주세요'); memo.focus(); return; }
+    if (!(await confirmSheet('퇴근을 기록할까요?', `지금 시각 <b class="num">${kstNow().slice(11, 16)}</b> 으로 퇴근이 기록돼요.`, '퇴근하기'))) return;
+    const btn = document.querySelector('[data-act="clock-out"]');
+    return withBusy(btn, '기록 중…', async () => {
+      const r = await api('clockOut', { content: memo.value });
+      toast(`수고했어요. ${dur(r.min)} 근무했어요`);
+      S.weekStart = ''; await refresh();
+    }).catch(() => {});
+  }
+  if (act === 'memo-save') {
+    return withBusy(el, '저장 중…', async () => {
+      await api('saveMemo', { rid: S.data.open.rid, content: document.getElementById('memo').value });
+      toast('메모를 저장했어요'); el.disabled = false; el.textContent = '메모만 저장';
+    }).catch(() => {});
+  }
+  if (act === 'my-new') return recordSheet(null, { mode: 'worker', date: el.dataset.date || '' });
+  if (act === 'my-edit') return recordSheet(S.data.records.find((r) => r.rid === el.dataset.rid), { mode: 'worker' });
+
+  /* 관리자 */
+  if (act === 'tab') {
+    if (S.tab === el.dataset.tab) return;
+    S.tab = el.dataset.tab; S.data = null; S.detailId = ''; renderAdmin(); return refresh();
+  }
+  if (act === 'a-week') {
+    S.weekStart = addDays(S.weekStart, 7 * Number(el.dataset.dir));
+    el.disabled = true;
+    return refresh();
+  }
+  if (act === 'detail') { S.detailId = el.dataset.id; renderAdmin(); window.scrollTo(0, 0); return; }
+  if (act === 'back') { S.detailId = ''; renderAdmin(); return; }
+  if (act === 'rec-new') return recordSheet(null, { date: el.dataset.date || '' });
+  if (act === 'rec-edit') {
+    const w = S.data.workers.find((x) => x.id === S.detailId);
+    return recordSheet(w.records.find((r) => r.rid === el.dataset.rid));
+  }
+  if (act === 'paid-add') {
+    const w = S.data.workers.find((x) => x.id === S.detailId);
+    const $p = document.getElementById('paid');
+    const cur = Number($p.value.replace(/[^0-9]/g, '') || 0);
+    const v = Number(el.dataset.v);
+    $p.value = moneyInput(v ? cur + v : w.summary.calc);
+    $p.dispatchEvent(new Event('input'));
+    return;
+  }
+  if (act === 'settle-save') {
+    const w = S.data.workers.find((x) => x.id === S.detailId);
+    return withBusy(el, '저장 중…', async () => {
+      await api('saveSettle', {
+        weekStart: S.data.week.start, workerId: w.id,
+        paid: document.getElementById('paid').value, paidDate: document.getElementById('paidDate').value,
+        memo: document.getElementById('smemo').value,
+      });
+      toast('입금 기록을 저장했어요'); await refresh();
+    }).catch(() => {});
+  }
+  if (act === 'settle-del') {
+    const w = S.data.workers.find((x) => x.id === S.detailId);
+    if (!(await confirmSheet('입금 기록을 삭제할까요?', `${esc(w.name)}님의 ${weekLabel(S.data.week.start)} 입금 기록이 시트에서 지워져요.`, '삭제', true))) return;
+    try { await api('deleteSettle', { weekStart: S.data.week.start, workerId: w.id }); toast('삭제했어요'); await refresh(); } catch (err) { toast(err.message); }
+    return;
+  }
+  if (act === 'w-new') { S.editWorker = { status: '사용', wage: 12000 }; S.hist = null; renderAdmin(); window.scrollTo(0, 0); return; }
+  if (act === 'w-open') {
+    S.editWorker = { ...S.data.workers.find((x) => x.id === el.dataset.id) }; S.hist = null;
+    renderAdmin(); window.scrollTo(0, 0);
+    try { S.hist = await api('workerHistory', { workerId: S.editWorker.id }); if (S.editWorker) renderAdmin(); } catch (err) { toast(err.message); }
+    return;
+  }
+  if (act === 'w-back') { S.editWorker = null; S.hist = null; renderAdmin(); return; }
+  if (act === 'f-status') {
+    const keep = ['f-name', 'f-id', 'f-pw', 'f-wage', 'f-phone'].map((id) => [id, document.getElementById(id).value]);
+    S.editWorker.status = el.dataset.v; renderAdmin();
+    keep.forEach(([id, v]) => { document.getElementById(id).value = v; });
+    return;
+  }
+  if (act === 'w-save') {
+    const isNew = !S.editWorker.id;
+    const payload = {
+      isNew, id: document.getElementById('f-id').value.trim(), name: document.getElementById('f-name').value,
+      password: document.getElementById('f-pw').value, wage: document.getElementById('f-wage').value.replace(/[^0-9]/g, ''),
+      phone: document.getElementById('f-phone').value, status: S.editWorker.status,
+    };
+    return withBusy(el, '저장 중…', async () => {
+      await api('saveWorker', payload);
+      if (isNew) {
+        await confirmSheet('알바생을 추가했어요', `아래 내용을 알바생에게 알려주세요.<br><br>아이디 <b>${esc(payload.id)}</b><br>비밀번호 <b>${esc(payload.password)}</b>`, '확인');
+      } else toast('저장했어요');
+      S.editWorker = null; S.hist = null; S.data = null; renderAdmin(); await refresh();
+    }).catch(() => {});
+  }
+});
+
+/* 시계 */
+setInterval(() => {
+  const c = document.getElementById('clock');
+  if (c) c.textContent = kstNow().slice(11, 16);
+  const el = document.getElementById('elapsed');
+  if (el && S.data && S.data.open) el.textContent = dur(Math.max(0, Math.floor((Date.now() - toMs(S.data.open.in)) / 60000)));
+}, 10000);
+
+/* 다른 앱 보다가 돌아오면 새로 불러오기 */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !S.token || $layer.innerHTML) return;
+  // 관리자가 입금액을 적다가 은행 앱에 다녀와도 입력한 내용이 지워지지 않도록, 목록 화면에서만 새로고침
+  if (S.role === 'admin' && (S.detailId || S.editWorker)) return;
+  if (document.activeElement && document.activeElement.matches('input, textarea')) return;
+  refresh();
+});
+
+render();
+</script>
+</body>
+</html>
