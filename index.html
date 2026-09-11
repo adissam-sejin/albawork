@@ -258,40 +258,87 @@ const S = {
 const $app = document.getElementById('app');
 
 /* ── 홈 화면에 추가 ── */
+// 휴대폰으로 처음 들어오면 1.5초 뒤 "홈 화면에 추가할까요?" 창을 자동으로 띄워요.
+// 안드로이드 크롬: [추가하기] 한 번이면 설치 창이 뜸 / 아이폰·카카오톡: 브라우저가 막아둬서 방법 안내
 let installEvent = null;
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; });
-window.addEventListener('appinstalled', () => { installEvent = null; toast('홈 화면에 추가했어요'); render(); });
+const LATER_KEY = 'aw_install_later';
+const UA = navigator.userAgent;
 const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const inAppBrowser = () => /KAKAOTALK|Instagram|FBAN|FBAV|NAVER|Line\//i.test(navigator.userAgent);
+const isIOS = () => /iPhone|iPad|iPod/i.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isMobile = () => isIOS() || /Android/i.test(UA);
+const isKakao = () => /KAKAOTALK/i.test(UA);
+const inAppBrowser = () => /KAKAOTALK|Instagram|FBAN|FBAV|NAVER|Line\//i.test(UA);
+const laterActive = () => Date.now() - Number(localStorage.getItem(LATER_KEY) || 0) < 3 * 86400000;
 const installLink = () => (isStandalone() ? '' : '<div style="text-align:center;margin-top:6px"><button class="text-btn" data-act="install">휴대폰 홈 화면에 추가하기</button></div>');
 
-async function startInstall() {
-  if (installEvent) {
-    installEvent.prompt();
-    const choice = await installEvent.userChoice.catch(() => null);
-    installEvent = null;
-    if (choice && choice.outcome === 'accepted') return;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installEvent = e;
+  autoOffer();
+});
+window.addEventListener('appinstalled', () => { installEvent = null; closeSheet(); toast('홈 화면에 추가했어요'); render(); });
+window.addEventListener('load', () => {
+  // 아이폰, 카카오톡 안 브라우저는 설치 신호를 주지 않으므로 직접 안내
+  if (isIOS() || inAppBrowser()) autoOffer();
+});
+
+let offerTimer = null;
+function autoOffer(tries = 0) {
+  if (!isMobile() || isStandalone() || laterActive()) return;
+  clearTimeout(offerTimer);
+  offerTimer = setTimeout(() => {
+    const busy = document.getElementById('layer').innerHTML
+      || (document.activeElement && document.activeElement.matches('input, textarea'));
+    if (busy) { if (tries < 5) autoOffer(tries + 1); return; }
+    offerSheet();
+  }, tries ? 6000 : 1500);
+}
+
+const offerHead = (title, sub) => `<div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">
+  <img src="/icons/icon-192.png" width="64" height="64" alt="" style="border-radius:16px;flex:none">
+  <div><h3 style="margin:0">${title}</h3><p class="note" style="margin:2px 0 0">${sub}</p></div></div>`;
+
+function offerSheet() {
+  if (isStandalone()) return;
+  if (installEvent && !inAppBrowser()) {
+    openSheet(`${offerHead('홈 화면에 추가할까요?', '아이콘을 눌러 앱처럼 바로 열 수 있어요.')}
+      <button class="btn" data-act="install-go">추가하기</button>
+      <button class="btn line" data-act="install-later">나중에</button>`);
+    return;
   }
-  const inApp = inAppBrowser()
-    ? `<div class="warn">지금은 ${/KAKAOTALK/i.test(navigator.userAgent) ? '카카오톡' : '앱'} 안에서 열려 있어요. 먼저 화면의 메뉴 버튼에서 ${isIOS() ? '<b>Safari로 열기</b>' : '<b>다른 브라우저로 열기</b>'}를 눌러주세요.</div>`
-    : '';
+  if (inAppBrowser()) {
+    openSheet(`${offerHead('홈 화면에 추가하려면', `${isKakao() ? '카카오톡' : '앱'} 안에서는 추가할 수 없어요.`)}
+      <p style="font-size:1.02rem">${isIOS() ? '<b>Safari</b>' : '<b>크롬</b>'}으로 열면 홈 화면에 추가할 수 있어요.</p>
+      ${isKakao() ? '<button class="btn" data-act="open-external">다른 브라우저로 열기</button>' : ''}
+      <p class="note" style="margin:10px 0 14px">버튼이 안 되면 화면의 메뉴 버튼에서 ${isIOS() ? 'Safari로 열기' : '다른 브라우저로 열기'}를 눌러주세요.</p>
+      <button class="btn line" data-act="install-later">나중에</button>`);
+    return;
+  }
   const steps = isIOS()
     ? `<ol class="install-steps">
-        <li><b>Safari</b>로 이 주소를 열어요</li>
         <li>화면 아래 <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요</li>
-        <li>목록을 내려 <b>홈 화면에 추가</b>를 누르고, 오른쪽 위 <b>추가</b></li>
+        <li>목록을 내려 <b>홈 화면에 추가</b>를 눌러요</li>
+        <li>오른쪽 위 <b>추가</b>를 누르면 끝</li>
       </ol>
-      <p class="note">아이폰은 홈 화면 아이콘으로 처음 열 때 로그인을 한 번 더 해요.</p>`
+      <p class="note">아이폰은 브라우저가 자동 추가를 막아둬서 직접 눌러야 해요. 아이콘으로 처음 열 때 로그인을 한 번 더 해요.</p>`
     : `<ol class="install-steps">
-        <li><b>크롬</b>으로 이 주소를 열어요</li>
         <li>오른쪽 위 <b>⋮</b>(점 세 개)를 눌러요</li>
-        <li><b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르고 <b>추가</b></li>
+        <li><b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 눌러요</li>
+        <li><b>추가</b>를 누르면 끝</li>
       </ol>`;
-  openSheet(`<h3>홈 화면에 추가하기</h3>
-    <p style="font-size:1rem">앱처럼 아이콘을 눌러 바로 열 수 있어요.</p>
-    ${inApp}${steps}
-    <button class="btn line" data-act="close">닫기</button>`);
+  openSheet(`${offerHead('홈 화면에 추가하기', '아이콘을 눌러 앱처럼 바로 열 수 있어요.')}
+    ${steps}
+    <button class="btn line" data-act="install-later">알겠어요</button>`);
+}
+
+async function runInstall() {
+  closeSheet();
+  if (!installEvent) return offerSheet();
+  const ev = installEvent;
+  ev.prompt();
+  const choice = await ev.userChoice.catch(() => null);
+  installEvent = null;
+  if (!choice || choice.outcome !== 'accepted') localStorage.setItem(LATER_KEY, String(Date.now()));
 }
 const $layer = document.getElementById('layer');
 
@@ -733,7 +780,10 @@ document.addEventListener('click', async (e) => {
 
   if (act === 'sheet-bg') { if (e.target === el) closeSheet(); return; }
   if (act === 'close') return closeSheet();
-  if (act === 'install') return startInstall();
+  if (act === 'install') return offerSheet();
+  if (act === 'install-go') return runInstall();
+  if (act === 'install-later') { localStorage.setItem(LATER_KEY, String(Date.now())); return closeSheet(); }
+  if (act === 'open-external') { location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href); return; }
   if (act === 'retry') { $app.innerHTML = '<div class="loading">불러오는 중이에요</div>'; return refresh(); }
   if (act === 'logout') {
     if (await confirmSheet('로그아웃할까요?', '다시 들어올 때 아이디와 비밀번호가 필요해요.', '로그아웃')) logout();
